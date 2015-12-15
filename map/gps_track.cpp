@@ -265,7 +265,7 @@ void GpsTrack::UpdateCollection(hours duration, bool needClear, vector<location:
   evictedIds = UnionRanges(evictedIdsByAdd, UnionRanges(evictedIdsByClear, evictedIdsByDuration));
 }
 
-void GpsTrack::NotifyCallback(pair<size_t, size_t> const & addedIds, pair<size_t, size_t> const & evictedIds)
+void GpsTrack::NotifyCallback(pair<size_t, size_t> addedIds, pair<size_t, size_t> evictedIds)
 {
   lock_guard<mutex> lg(m_callbackGuard);
 
@@ -275,39 +275,25 @@ void GpsTrack::NotifyCallback(pair<size_t, size_t> const & addedIds, pair<size_t
   if (m_needSendSnapshop)
   {
     m_needSendSnapshop = false;
+    addedIds = m_collection->GetIdRange();
+    evictedIds = make_pair(kInvalidId, kInvalidId);
+  }
 
-    vector<pair<size_t, location::GpsTrackInfo>> toAdd;
-    toAdd.reserve(m_collection->GetSize());
+  if (addedIds.first == kInvalidId && evictedIds.first == kInvalidId)
+    return; // nothing to send
+
+  // Get 'toAdd' data
+  vector<pair<size_t, location::GpsTrackInfo>> toAdd;
+  if (addedIds.first != kInvalidId)
+  {
+    toAdd.reserve(addedIds.second - addedIds.first + 1);
     m_collection->ForEach([&toAdd](location::GpsTrackInfo const & point, size_t id)->bool
     {
       toAdd.emplace_back(id, point);
       return true;
     });
-
-    if (toAdd.empty())
-      return; // nothing to send
-
-    m_callback(move(toAdd), make_pair(kInvalidId, kInvalidId));
+    ASSERT_EQUAL(toAdd.size(), addedIds.second - addedIds.first + 1, ());
   }
-  else
-  {
-    vector<pair<size_t, location::GpsTrackInfo>> toAdd;
-    if (addedIds.first != kInvalidId)
-    {
-      size_t const addedCount = addedIds.second - addedIds.first + 1;
-      ASSERT_GREATER_OR_EQUAL(m_collection->GetSize(), addedCount, ());
-      toAdd.reserve(addedCount);
-      m_collection->ForEach([&toAdd](location::GpsTrackInfo const & point, size_t id)->bool
-      {
-        toAdd.emplace_back(id, point);
-        return true;
-      }, m_collection->GetSize() - addedCount);
-      ASSERT_EQUAL(toAdd.size(), addedCount, ());
-    }
 
-    if (toAdd.empty() && evictedIds.first == kInvalidId)
-      return; // nothing to send
-
-    m_callback(move(toAdd), evictedIds);
-  }
+  m_callback(move(toAdd), evictedIds);
 }

@@ -63,7 +63,7 @@ private:
   void UpdateStorage(bool needClear, vector<location::GpsTrackInfo> const & points);
   void UpdateCollection(hours duration, bool needClear, vector<location::GpsTrackInfo> const & points,
                         pair<size_t, size_t> & addedIds, pair<size_t, size_t> & evictedIds);
-  void NotifyCallback(pair<size_t, size_t> const & addedIds, pair<size_t, size_t> const & evictedIds);
+  void NotifyCallback(pair<size_t, size_t> addedIds, pair<size_t, size_t> evictedIds);
 
   size_t const m_maxItemCount;
   string const m_filePath;

@@ -62,10 +62,14 @@ public:
   /// res.second is upper bound. If collection is empty, then returns pair(0, 0).
   pair<double, double> GetTimestampRange() const;
 
+  /// Returns range of id of collection where range is [res.first,res.second]
+  /// If collection is empty, thrn returns pair(kInvalidId,kInvalidId).
+  pair<size_t, size_t> GetIdRange() const;
+
   /// Returns max size of collection
   size_t GetMaxSize() const;
 
-  /// Enumerates items in the collection.
+  /// Calls f for each element since specified zero-based position.
   /// @param f - callable object, which is called with params - item and item id,
   /// if f returns false, then enumeration is stopped.
   /// @param pos - position index to start enumeration
@@ -81,6 +85,34 @@ public:
       TItem const & item = *i;
       size_t const itemId = id;
       if (!f(item, itemId))
+        break;
+    }
+  }
+
+  /// Calls f for each element with element id in specified range
+  /// @param f - callable object, which is called with params - item and item id,
+  /// if f returns false, then enumeration is stopped.
+  /// @param ids - range of ids, where range is [ids.first,ids.second]
+  template <typename F>
+  void ForEachInRange(F &&f, pair<size_t, size_t> const & ids) const
+  {
+    if (ids.first == kInvalidId || ids.second == kInvalidId)
+    {
+      ASSERT_EQUAL(ids.first, kInvalidId, ());
+      ASSERT_EQUAL(ids.second, kInvalidId, ());
+      return;
+    }
+    auto const collectionRange = GetIdRange();
+    auto const scanRange = make_pair(max(ids.first, collectionRange.first), min(ids.second, collectionRange.second));
+    auto i = m_items.begin() + scanRange.first - collectionRange.first;
+    for (size_t id = scanRange.first;; ++i, ++id)
+    {
+      ASSERT(i != m_items.cend(), ());
+      TItem const & item = *i;
+      size_t itemId = id;
+      if (!f(item, itemId))
+        break;
+      if (id == scanRange.second)
         break;
     }
   }

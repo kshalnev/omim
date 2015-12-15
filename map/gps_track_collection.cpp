@@ -155,6 +155,16 @@ pair<double, double> GpsTrackCollection::GetTimestampRange() const
   return make_pair(m_items.front().m_timestamp, m_items.back().m_timestamp);
 }
 
+pair<size_t, size_t> GpsTrackCollection::GetIdRange() const
+{
+  if (m_items.empty())
+    return make_pair(kInvalidId, kInvalidId);
+
+  ASSERT_GREATER_OR_EQUAL(m_lastId, m_items.size(), ());
+
+  return make_pair(m_lastId - m_items.size(), m_lastId - 1);
+}
+
 pair<size_t, size_t> GpsTrackCollection::RemoveUntil(deque<TItem>::iterator i)
 {
   auto const res = make_pair(m_lastId - m_items.size(),
