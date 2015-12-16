@@ -24,6 +24,7 @@ HEADERS += \
     mwm_url.hpp \
     storage_bridge.hpp \
     styled_point.hpp \
+    sunrise_sunset_algorithm.hpp \
     track.hpp \
     user_mark.hpp \
     user_mark_container.hpp \
@@ -43,6 +44,7 @@ SOURCES += \
     mwm_url.cpp \
     storage_bridge.cpp \
     styled_point.cpp \
+    sunrise_sunset_algorithm.cpp \
     track.cpp \
     user_mark.cpp \
     user_mark_container.cpp \
