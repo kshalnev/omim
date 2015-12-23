@@ -1,5 +1,6 @@
 #include "sunrise_sunset_algorithm.hpp"
 
+#include "base/assert.hpp"
 #include "base/math.hpp"
 #include "base/timegm.hpp"
 
@@ -12,8 +13,6 @@ namespace
 //   nautical     = 102 degrees
 //   astronomical = 108 degrees
 double constexpr kZenith = 96;
-
-time_t constexpr kOneDaySeconds = 24 * 60 * 60;
 
 inline double NormalizeAngle(double a)
 {
@@ -29,6 +28,56 @@ inline double NormalizeHour(double h)
   if (res < 0)
     res += 24.;
   return res;
+}
+
+inline bool IsLeapYear(int year)
+{
+  return year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+}
+
+inline int DaysOfMonth(int year, int month)
+{
+  ASSERT_GREATER_OR_EQUAL(month, 1, ());
+  ASSERT_LESS_OR_EQUAL(month, 12, ());
+  int const february = IsLeapYear(year) ? 29 : 28;
+  int const daysPerMonth[12] = { 31, february, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+  return daysPerMonth[month - 1];
+}
+
+void NextDay(int & year, int & month, int & day)
+{
+  if (day < DaysOfMonth(year, month))
+  {
+    ++day;
+    return;
+  }
+  if (month < 12)
+  {
+    day = 1;
+    ++month;
+    return;
+  }
+  day = 1;
+  month = 1;
+  ++year;
+}
+
+void PrevDay(int & year, int & month, int & day)
+{
+  if (day > 1)
+  {
+    --day;
+    return;
+  }
+  if (month > 1)
+  {
+    --month;
+    day = DaysOfMonth(year, month);
+    return;
+  }
+  --year;
+  month = 12;
+  day = 31;
 }
 
 enum class DayEventType
@@ -139,66 +188,61 @@ bool CalculateDayEventTime(int year, int month, int day,
   return true;
 }
 
-bool CalculateDayEventTime(time_t timestampUtc,
+bool CalculateDayEventTime(int year, int month, int day,
                            double latitude, double longitude,
                            DayEventType type,
-                           time_t & eventTimeUtc)
+                           time_t & timestampUtc)
 {
-  tm const * const t = gmtime(&timestampUtc);
-  if (nullptr == t)
-    return false;
-
   int h, m, s;
-  if (!CalculateDayEventTime(t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, latitude, longitude, type, h, m, s))
+  if (!CalculateDayEventTime(year, month, day, latitude, longitude, type, h, m, s))
     return false;
 
-  tm res = *t;
-  res.tm_hour = h;
-  res.tm_min = m;
-  res.tm_sec = s;
-  eventTimeUtc = base::TimeGM(res);
+  tm t = {};
+  t.tm_year = year - 1900;
+  t.tm_mon = month - 1;
+  t.tm_mday = day;
+  t.tm_hour = h;
+  t.tm_min = m;
+  t.tm_sec = s;
+  timestampUtc = base::TimeGM(t);
   return true;
 }
 
 } // namespace
 
-bool CalculateSunriseSunsetTime(time_t timestampUtc,
+bool CalculateSunriseSunsetTime(int year, int month, int day,
                                 double latitude, double longitude,
                                 time_t & sunriseUtc, time_t & sunsetUtc)
 {
+  ASSERT_GREATER_OR_EQUAL(month, 1, ());
+  ASSERT_LESS_OR_EQUAL(month, 12, ());
+  ASSERT_GREATER_OR_EQUAL(day, 1, ());
+  ASSERT_LESS_OR_EQUAL(day, DaysOfMonth(year, month), ());
+
   time_t timestampSunrise, timestampSunset;
-  if (!CalculateDayEventTime(timestampUtc, latitude, longitude, DayEventType::Sunrise, timestampSunrise) ||
-      !CalculateDayEventTime(timestampUtc, latitude, longitude, DayEventType::Sunset, timestampSunset))
+  if (!CalculateDayEventTime(year, month, day, latitude, longitude, DayEventType::Sunrise, timestampSunrise) ||
+      !CalculateDayEventTime(year, month, day, latitude, longitude, DayEventType::Sunset, timestampSunset))
     return false;
 
   if (timestampSunset < timestampSunrise)
   {
-    // Change date line.
     if (longitude > 0)
     {
-      if (!CalculateDayEventTime(timestampUtc - kOneDaySeconds, latitude, longitude, DayEventType::Sunrise, timestampSunrise))
+      PrevDay(year, month, day);
+      if (!CalculateDayEventTime(year, month, day, latitude, longitude, DayEventType::Sunrise, timestampSunrise))
         return false;
     }
     else if (longitude < 0)
     {
-      if (!CalculateDayEventTime(timestampUtc + kOneDaySeconds, latitude, longitude, DayEventType::Sunset, timestampSunset))
+      NextDay(year, month, day);
+      if (!CalculateDayEventTime(year, month, day, latitude, longitude, DayEventType::Sunset, timestampSunset))
         return false;
     }
   }
+
+  ASSERT_LESS(timestampSunrise, timestampSunset, ());
 
   sunriseUtc = timestampSunrise;
   sunsetUtc = timestampSunset;
   return true;
 }
-
-bool CalculateSunriseSunsetTime(int year, int month, int day,
-                                double latitude, double longitude,
-                                time_t & sunriseUtc, time_t & sunsetUtc)
-{
-  tm t = {};
-  t.tm_year = year - 1900;
-  t.tm_mon = month - 1;
-  t.tm_mday = day;
-  return CalculateSunriseSunsetTime(base::TimeGM(t), latitude, longitude, sunriseUtc, sunsetUtc);
-}
-
