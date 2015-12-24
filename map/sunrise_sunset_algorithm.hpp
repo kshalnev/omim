@@ -12,9 +12,10 @@
 /// @param longitude - longitude, -180...+180 degrees
 /// @param sunriseUtc - output param, UTC time of sunrise
 /// @param sunsetUtc - output param, UTC time of sunset
-/// @returns returns true and fills output if output has been calculated,
-/// false and does not touch output if sunrise/sunset cannot be calculated for a specified date
+/// @returns true on success and false on error
 /// @note date year/month/day is specified for the interesting point latituda/longitude
+/// @note for polar day diff between sunset and sunrise is 24h - all day sun,
+/// and for polar night sunrise = sunset.
 bool CalculateSunriseSunsetTime(int year, int month, int day,
                                 double latitude, double longitude,
                                 time_t & sunriseUtc, time_t & sunsetUtc);
@@ -26,9 +27,10 @@ bool CalculateSunriseSunsetTime(int year, int month, int day,
 /// @param longitude - longitude, -180...+180 degrees
 /// @param sunriseUtc - output param, UTC time of sunrise
 /// @param sunsetUtc - output param, UTC time of sunset
-/// @returns returns true and fills output if output has been calculated,
-/// false and does not touch output if sunrise/sunset cannot be calculated for a specified date
+/// @returns true on success and false on error
 /// @note if sunrise/sunset occur before the specified time then next sunrise and sunset are returned.
+/// @note for polar day diff between sunset and sunrise is 24h - all day sun,
+/// and for polar night sunrise = sunset.
 bool CalculateSunriseSunsetTime(time_t timeUtc,
                                 double latitude, double longitude,
                                 time_t & sunriseUtc, time_t & sunsetUtc);
@@ -50,8 +52,7 @@ string DebugPrint(DayTimeType type);
 /// @param longitude - longitude, -180...+180 degrees
 /// @param type - output, type of day time
 /// @param untilUtc - output, UTC file when day time type is being changed
-/// @returns returns true and fills output if output has been calculated,
-/// false and does not touch output if sunrise/sunset cannot be calculated for a specified date
+/// @returns true on success and false on error
 bool GetDayTime(time_t timeUtc,
                 double latitude, double longitude,
                 DayTimeType & type, time_t & untilUtc);
