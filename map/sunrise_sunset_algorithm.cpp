@@ -222,6 +222,9 @@ bool CalculateSunriseSunsetTime(int year, int month, int day,
 
   if (timestampSunset < timestampSunrise)
   {
+    // Process line of date changing.
+    // Local date fits to two utc dates (current utc date and previous utc date).
+
     if (longitude > 0)
     {
       PrevDay(year, month, day);
