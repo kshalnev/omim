@@ -279,21 +279,21 @@ bool GetDayTime(time_t timeUtc,
 
   if (timeUtc < sunriseUtc)
   {
-    // (time) (sunrise) (sunset) ---> time axix
+    // (time) (sunrise) (sunset) ---> time axis
 
     type = DayTimeType::NightTime;
     untilUtc = sunriseUtc;
   }
   else if (timeUtc < sunsetUtc)
   {
-    // (sunrise) (time) (sunset) ---> time axix
+    // (sunrise) (time) (sunset) ---> time axis
 
     type = DayTimeType::DayTime;
     untilUtc = sunsetUtc;
   }
   else
   {
-    // (sunrise) (sunset) (time) | (sunrise) (sunset) ---> time axix
+    // (sunrise) (sunset) (time) | (sunrise) (sunset) ---> time axis
 
     if (!CalculateSunriseSunsetTime(timeUtc + kOneDaySeconds, latitude, longitude, sunriseUtc, sunsetUtc))
       return false;
