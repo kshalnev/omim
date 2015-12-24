@@ -13,15 +13,15 @@ namespace
 
 time_t constexpr kTimeEqualityRangeSec = 10 * 60; // 10 minutes
 
-bool TimesEqual(time_t examinedTime, time_t ethalonTime, time_t range = kTimeEqualityRangeSec)
+bool TimesEqual(time_t examinedTime, time_t etalonTime, time_t range = kTimeEqualityRangeSec)
 {
-  bool const res = examinedTime >= (ethalonTime - range / 2) &&
-                   examinedTime <= (ethalonTime + range / 2);
+  bool const res = examinedTime >= (etalonTime - range / 2) &&
+                   examinedTime <= (etalonTime + range / 2);
   if (!res)
   {
     string const examined = ctime(&examinedTime);
-    string const ethalon = ctime(&ethalonTime);
-    LOG(LINFO, ("Times are not equal: examined time", examined, "ethalon time", ethalon));
+    string const etalon = ctime(&etalonTime);
+    LOG(LINFO, ("Times are not equal: examined time", examined, "etalon time", etalon));
   }
   return res;
 }
