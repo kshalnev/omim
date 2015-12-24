@@ -150,7 +150,8 @@ bool CalculateDayEventTime(int year, int month, int day,
 
   if (cosH < -1 || cosH > 1)
   {
-    // the sun never rises or sets on this location (on the specified date)
+    // if cosH > 1 then sun is never rises on this location on specified date (polar night)
+    // if cosH < -1 then sun is never sets on this location on specified date (polar day)
     return false;
   }
 
