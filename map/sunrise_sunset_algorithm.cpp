@@ -159,8 +159,12 @@ bool CalculateDayEventTime(int year, int month, int day,
   double H = 0;
   switch (type)
   {
-  case DayEventType::Sunrise: H = 360 - my::RadToDeg(acos(cosH)); break;
-  case DayEventType::Sunset: H = my::RadToDeg(acos(cosH)); break;
+  case DayEventType::Sunrise:
+    H = 360 - my::RadToDeg(acos(cosH));
+    break;
+  case DayEventType::Sunset:
+    H = my::RadToDeg(acos(cosH));
+    break;
   }
 
   H = H / 15;
