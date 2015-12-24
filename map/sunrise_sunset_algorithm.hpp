@@ -36,7 +36,9 @@ bool CalculateSunriseSunsetTime(time_t timeUtc,
 enum class DayTimeType
 {
   DayTime,
-  NightTime
+  NightTime,
+  PolarDay,
+  PolarNight
 };
 
 string DebugPrint(DayTimeType type);

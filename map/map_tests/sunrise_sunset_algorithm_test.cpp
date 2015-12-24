@@ -11,6 +11,8 @@
 namespace
 {
 
+time_t constexpr kOneDaySeconds = 24 * 60 * 60;
+
 time_t constexpr kTimeEqualityRangeSec = 10 * 60; // 10 minutes
 
 bool TimesEqual(time_t examinedTime, time_t sampleTime, time_t range = kTimeEqualityRangeSec)
@@ -325,10 +327,16 @@ UNIT_TEST(SunriseSunsetAlgorithm_Reykjavik_May)
 UNIT_TEST(SunriseSunsetAlgorithm_Reykjavik_June)
 {
   // Reykjavik (utc 0). For date 2015/6/22:
-  // No sunrise/sunset
+  // No sunrise/sunset, polar day.
   double const lat = 64.120467;
   double const lon = -21.809448;
 
   time_t sunrise, sunset;
-  TEST_EQUAL(false, CalculateSunriseSunsetTime(2015, 6, 22, lat, lon, sunrise, sunset), ());
+  TEST(CalculateSunriseSunsetTime(2015, 6, 22, lat, lon, sunrise, sunset), ());
+  TEST(sunset == (sunrise + kOneDaySeconds), ()); // polar day
+
+  DayTimeType type;
+  time_t until;
+  TEST(GetDayTime(MakeUtcTime(2015, 6, 22, 12, 30), lat, lon, type, until), ());
+  TEST_EQUAL(type, DayTimeType::PolarDay, ());
 }
