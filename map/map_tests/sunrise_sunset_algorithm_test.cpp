@@ -17,8 +17,9 @@ time_t constexpr kTimeEqualityRangeSec = 10 * 60; // 10 minutes
 
 bool TimesEqual(time_t examinedTime, time_t sampleTime, time_t range = kTimeEqualityRangeSec)
 {
-  bool const res = examinedTime >= (sampleTime - range / 2) &&
-                   examinedTime <= (sampleTime + range / 2);
+  time_t const halfRange = range / 2;
+  bool const res = examinedTime >= (sampleTime - halfRange) &&
+                   examinedTime <= (sampleTime + halfRange);
   if (!res)
   {
     string const examined = ctime(&examinedTime);

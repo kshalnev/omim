@@ -14,8 +14,8 @@
 /// @param sunsetUtc - output param, UTC time of sunset
 /// @returns true on success and false on error
 /// @note date year/month/day is specified for the interesting point latituda/longitude
-/// @note for polar day diff between sunset and sunrise is 24h - all day sun,
-/// and for polar night sunrise = sunset.
+/// @note for polar day sunrise is set to year/month/day,0:0:0 and sunset is set to sunrise + 24h - 24h of day
+/// @note for polar night sunrise and sunset both are set to year/month/day,0:0:0 - 0 sec of day
 bool CalculateSunriseSunsetTime(int year, int month, int day,
                                 double latitude, double longitude,
                                 time_t & sunriseUtc, time_t & sunsetUtc);
@@ -28,9 +28,9 @@ bool CalculateSunriseSunsetTime(int year, int month, int day,
 /// @param sunriseUtc - output param, UTC time of sunrise
 /// @param sunsetUtc - output param, UTC time of sunset
 /// @returns true on success and false on error
-/// @note if sunrise/sunset occur before the specified time then next sunrise and sunset are returned.
-/// @note for polar day diff between sunset and sunrise is 24h - all day sun,
-/// and for polar night sunrise = sunset.
+/// @note if sunrise/sunset occur before the specified timeUtc then next sunrise and sunset are returned.
+/// @note for polar day sunrise is set to year/month/day,0:0:0 and sunset is set to sunrise + 24h - 24h of sun
+/// @note for polar night sunrise and sunset both are set to year/month/day,0:0:0 - 0 sec of sun
 bool CalculateSunriseSunsetTime(time_t timeUtc,
                                 double latitude, double longitude,
                                 time_t & sunriseUtc, time_t & sunsetUtc);
