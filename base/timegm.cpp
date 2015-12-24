@@ -54,4 +54,16 @@ time_t TimeGM(std::tm const & tm)
 
   return seconds;
 }
+
+time_t TimeGM(int year, int month, int day, int hour, int min, int sec)
+{
+  tm t = {};
+  t.tm_year = year - 1900;
+  t.tm_mon = month - 1;
+  t.tm_mday = day;
+  t.tm_hour = hour;
+  t.tm_min = min;
+  t.tm_sec = sec;
+  return TimeGM(t);
+}
 } // namespace base

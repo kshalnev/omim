@@ -31,14 +31,6 @@ bool TimesEqual(time_t examinedTime, time_t sampleTime, time_t range = kTimeEqua
 
 time_t MakeUtcTime(int year, int month, int day, int hour = 0, int min = 0, int sec = 0)
 {
-  tm t = {};
-  t.tm_year = year - 1900;
-  t.tm_mon = month - 1;
-  t.tm_mday = day;
-  t.tm_hour = hour;
-  t.tm_min = min;
-  t.tm_sec = sec;
-  return base::TimeGM(t);
 }
 
 } // namespace
