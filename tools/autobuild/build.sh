@@ -51,7 +51,7 @@ BuildQt() {
     echo "Launching qmake..."
     # This call is needed to correctly rebuild c++ sources after switching between branches with added or removed source files.
     # Otherwise we get build errors.
-    "$QMAKE" -r CONFIG-=sdk "$QMAKE_PARAMS" -spec "$(StripCygwinPrefix $MKSPEC)" "$(StripCygwinPrefix $MY_PATH)/../../omim.pro"
+    "$QMAKE" -r CONFIG-=sdk CONFIG-=no-tests "$QMAKE_PARAMS" -spec "$(StripCygwinPrefix $MKSPEC)" "$(StripCygwinPrefix $MY_PATH)/../../omim.pro"
 #    make clean > /dev/null || true
     make -j $(GetCPUCores)
   )
