@@ -59,6 +59,11 @@ LOCAL_SRC_FILES += $(ROOT_PATH_FROM_JNI)/testing/testingmain.cpp
 LOCAL_SRC_FILES += $(ROOT_PATH_FROM_JNI)/android/UnitTests/jni/mock.cpp
 LOCAL_SRC_FILES += ./test.cpp
 
+LOCAL_SRC_FILES += $(ROOT_PATH_FROM_JNI)/android/jni/com/mapswithme/core/jni_helper.cpp
+LOCAL_SRC_FILES += $(ROOT_PATH_FROM_JNI)/android/jni/com/mapswithme/core/logging.cpp
+LOCAL_SRC_FILES += $(ROOT_PATH_FROM_JNI)/android/jni/com/mapswithme/platform/HttpThread.cpp
+# LOCAL_SRC_FILES += $(ROOT_PATH_FROM_JNI)/android/jni/com/mapswithme/platform/Platform.cpp
+
 LOCAL_LDLIBS := -llog -landroid -lEGL -lGLESv1_CM
 LOCAL_LDLIBS += -lGLESv2 -latomic -lz
 LOCAL_LDLIBS += -Wl,--gc-sections
