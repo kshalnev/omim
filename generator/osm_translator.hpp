@@ -13,6 +13,7 @@
 
 #include "coding/file_writer.hpp"
 
+#include "base/assert.hpp"
 #include "base/cache.hpp"
 #include "base/logging.hpp"
 #include "base/stl_add.hpp"
@@ -244,6 +245,62 @@ protected:
   }
 };
 
+class BusStopProcessor
+{
+public:
+  void ProcessBusStop(OsmElement * p)
+  {
+    ASSERT_EQUAL(p->type, OsmElement::EntityType::Node, ());
+
+    static string const kHighway = "highway";
+    static string const kBusStop = "bus_stop";
+
+    if (p->GetTag(kHighway) != kBusStop)
+      return; // not a bus stop
+
+    auto i = m_routes.find(p->id);
+    if (i != m_routes.end())
+      return; // bus stop exists
+
+    m_routes.insert(make_pair(p->id, set<string>()));
+
+    LOG(LINFO, ("Found a bus stop", p->id));
+  }
+
+  void ProcessBusRoute(OsmElement * p)
+  {
+    ASSERT_EQUAL(p->type, OsmElement::EntityType::Relation, ());
+
+    static string const kRoute = "route";
+    static string const kBus = "bus";
+    static string const kRef = "ref";
+
+    if (p->GetTag(kRoute) != kBus)
+      return; // not a bus route
+
+    string ref = p->GetTag(kRef);
+    if (ref.empty())
+      return; // unnamed route, skip it
+
+    for (OsmElement::Member const & m : p->Members())
+    {
+      if (m.type != OsmElement::EntityType::Node)
+        continue;
+
+      auto i = m_routes.find(m.ref);
+      if (i == m_routes.end())
+        continue;
+
+      i->second.insert(ref);
+
+      LOG(LINFO, ("Found a route", ref, "bus stop", i->first));
+    }
+  }
+
+private:
+  unordered_map<uint64_t, set<string>> m_routes;
+};
+
 }  // namespace
 
 /// @param  TEmitter  Feature accumulating policy
@@ -258,6 +315,7 @@ class OsmToFeatureTranslator
   m4::Tree<Place> m_places;
   RelationTagsNode m_nodeRelations;
   RelationTagsWay m_wayRelations;
+  BusStopProcessor m_busStopProcessor;
 
   class HolesAccumulator
   {
@@ -433,6 +491,8 @@ public:
           break;
         }
 
+        m_busStopProcessor.ProcessBusStop(p);
+
         m2::PointD const pt = MercatorBounds::FromLatLon(p->lat, p->lon);
         EmitPoint(pt, params, osm::Id::Node(p->id));
         state = FeatureState::Ok;
@@ -488,6 +548,8 @@ public:
 
       case OsmElement::EntityType::Relation:
       {
+        m_busStopProcessor.ProcessBusRoute(p);
+
         {
           // 1. Check, if this is our processable relation. Here we process only polygon relations.
           size_t i = 0;
