@@ -248,7 +248,7 @@ protected:
 class BusStopProcessor
 {
 public:
-  void ProcessBusStop(OsmElement * p)
+  bool ProcessBusStop(OsmElement * p)
   {
     ASSERT_EQUAL(p->type, OsmElement::EntityType::Node, ());
 
@@ -256,18 +256,20 @@ public:
     static string const kBusStop = "bus_stop";
 
     if (p->GetTag(kHighway) != kBusStop)
-      return; // not a bus stop
+      return false; // not a bus stop
 
     auto i = m_routes.find(p->id);
     if (i != m_routes.end())
-      return; // bus stop exists
+      return false; // bus stop exists
 
     m_routes.insert(make_pair(p->id, set<string>()));
 
     LOG(LINFO, ("Found a bus stop", p->id));
+
+    return true;
   }
 
-  void ProcessBusRoute(OsmElement * p)
+  bool ProcessBusRoute(OsmElement * p)
   {
     ASSERT_EQUAL(p->type, OsmElement::EntityType::Relation, ());
 
@@ -276,12 +278,13 @@ public:
     static string const kRef = "ref";
 
     if (p->GetTag(kRoute) != kBus)
-      return; // not a bus route
+      return false; // not a bus route
 
     string ref = p->GetTag(kRef);
     if (ref.empty())
-      return; // unnamed route, skip it
+      return false; // unnamed route, skip it
 
+    bool res = false;
     for (OsmElement::Member const & m : p->Members())
     {
       if (m.type != OsmElement::EntityType::Node)
@@ -292,9 +295,31 @@ public:
         continue;
 
       i->second.insert(ref);
+      res = true;
 
       LOG(LINFO, ("Found a route", ref, "bus stop", i->first));
     }
+
+    return res;
+  }
+
+  bool IsBusStop(uint64_t id) const
+  {
+    return m_routes.end() == m_routes.find(id);
+  }
+
+  string GetBusRoutes(uint64_t id) const
+  {
+    auto i = m_routes.find(id);
+    if (i == m_routes.end() || i->second.empty())
+      return string();
+
+    auto j = i->second.begin(), jend = i->second.end();
+    string res = *j;
+    for (++j; j != jend; ++j)
+      res += ", " + *j;
+
+    return res;
   }
 
 private:
@@ -315,7 +340,15 @@ class OsmToFeatureTranslator
   m4::Tree<Place> m_places;
   RelationTagsNode m_nodeRelations;
   RelationTagsWay m_wayRelations;
+
   BusStopProcessor m_busStopProcessor;
+  struct BusStopInfo
+  {
+    uint64_t id;
+    m2::PointD pt;
+    FeatureParams params;
+  };
+  list<BusStopInfo> m_busStops;
 
   class HolesAccumulator
   {
@@ -491,10 +524,20 @@ public:
           break;
         }
 
-        m_busStopProcessor.ProcessBusStop(p);
-
         m2::PointD const pt = MercatorBounds::FromLatLon(p->lat, p->lon);
-        EmitPoint(pt, params, osm::Id::Node(p->id));
+
+        if (m_busStopProcessor.ProcessBusStop(p))
+        {
+          m_busStops.push_back(BusStopInfo());
+          BusStopInfo & bsi = m_busStops.back();
+          bsi.id = p->id;
+          bsi.pt = pt;
+          bsi.params = params;
+        }
+        else
+        {
+          EmitPoint(pt, params, osm::Id::Node(p->id));
+        }
         state = FeatureState::Ok;
         break;
       }
@@ -640,5 +683,12 @@ public:
     {
       m_emitter(p.GetFeature());
     });
+
+    for (BusStopInfo & bsi : m_busStops)
+    {
+      string routes = m_busStopProcessor.GetBusRoutes(bsi.id);
+      LOG(LINFO, ("Found bus stop", bsi.id, ":", routes));
+      EmitPoint(bsi.pt, bsi.params, osm::Id::Node(bsi.id));
+    }
   }
 };
