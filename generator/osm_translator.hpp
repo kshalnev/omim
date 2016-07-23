@@ -311,16 +311,22 @@ public:
   template <typename F>
   void ForEach(F && fn)
   {
+    size_t processed = 0;
     for (auto & kv : m_busStops)
     {
       string routes = strings::JoinStrings(kv.second.routes, ';');
+      if (routes.empty())
+        continue;
 
       kv.second.params.GetMetadata().Set(feature::Metadata::FMD_BUS_ROUTES, routes);
 
       LOG(LINFO, ("Bus stop", kv.first, "routes are:", routes));
 
       fn(osm::Id::Node(kv.first), kv.second.pt, kv.second.params);
+      ++processed;
     }
+
+    LOG(LINFO, (processed, "of", m_busStops.size(), "bus stops with routes"));
   }
 
   void Clear()
