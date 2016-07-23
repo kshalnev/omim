@@ -248,7 +248,7 @@ protected:
 class BusStopProcessor
 {
 public:
-  bool ProcessBusStop(OsmElement * p)
+  bool ProcessBusStop(OsmElement * p, FeatureParams & params)
   {
     ASSERT_EQUAL(p->type, OsmElement::EntityType::Node, ());
 
@@ -258,11 +258,13 @@ public:
     if (p->GetTag(kHighway) != kBusStop)
       return false; // not a bus stop
 
-    auto i = m_routes.find(p->id);
-    if (i != m_routes.end())
-      return false; // bus stop exists
+    auto i = m_busStops.find(p->id);
+    if (i != m_busStops.end())
+      return false; // bus already exists
 
-    m_routes.insert(make_pair(p->id, set<string>()));
+    BusStopInfo & bsi = m_busStops[p->id];
+    bsi.params = params;
+    bsi.pt = MercatorBounds::FromLatLon(p->lat, p->lon);
 
     LOG(LINFO, ("Found a bus stop", p->id));
 
@@ -282,7 +284,7 @@ public:
 
     string ref = p->GetTag(kRef);
     if (ref.empty())
-      return false; // unnamed route, skip it
+      return false; // no route name, skip it
 
     bool res = false;
     for (OsmElement::Member const & m : p->Members())
@@ -290,40 +292,51 @@ public:
       if (m.type != OsmElement::EntityType::Node)
         continue;
 
-      auto i = m_routes.find(m.ref);
-      if (i == m_routes.end())
+      auto i = m_busStops.find(m.ref);
+      if (i == m_busStops.end())
         continue;
 
-      i->second.insert(ref);
+      i->second.routes.insert(ref);
       res = true;
 
       LOG(LINFO, ("Found a route", ref, "bus stop", i->first));
     }
 
-    return res;
-  }
-
-  bool IsBusStop(uint64_t id) const
-  {
-    return m_routes.end() == m_routes.find(id);
-  }
-
-  string GetBusRoutes(uint64_t id) const
-  {
-    auto i = m_routes.find(id);
-    if (i == m_routes.end() || i->second.empty())
-      return string();
-
-    auto j = i->second.begin(), jend = i->second.end();
-    string res = *j;
-    for (++j; j != jend; ++j)
-      res += ", " + *j;
+    if (!res)
+      LOG(LINFO, ("Route", p->id, "bus stops not found"));
 
     return res;
   }
 
-private:
-  unordered_map<uint64_t, set<string>> m_routes;
+  template <typename F>
+  void ForEach(F && fn)
+  {
+    for (auto & kv : m_busStops)
+    {
+      string routes = strings::JoinStrings(kv.second.routes, ';');
+
+      kv.second.params.AddAddress(routes);
+
+      LOG(LINFO, ("Bus stop", kv.first, "routes are:", routes));
+
+      fn(osm::Id::Node(kv.first), kv.second.pt, kv.second.params);
+    }
+  }
+
+  void Clear()
+  {
+    m_busStops.clear();
+  }
+
+private:  
+  struct BusStopInfo
+  {
+    set<string> routes;
+    FeatureParams params;
+    m2::PointD pt;
+  };
+
+  map<uint64_t, BusStopInfo> m_busStops;
 };
 
 }  // namespace
@@ -340,15 +353,7 @@ class OsmToFeatureTranslator
   m4::Tree<Place> m_places;
   RelationTagsNode m_nodeRelations;
   RelationTagsWay m_wayRelations;
-
   BusStopProcessor m_busStopProcessor;
-  struct BusStopInfo
-  {
-    uint64_t id;
-    m2::PointD pt;
-    FeatureParams params;
-  };
-  list<BusStopInfo> m_busStops;
 
   class HolesAccumulator
   {
@@ -524,18 +529,9 @@ public:
           break;
         }
 
-        m2::PointD const pt = MercatorBounds::FromLatLon(p->lat, p->lon);
-
-        if (m_busStopProcessor.ProcessBusStop(p))
+        if (!m_busStopProcessor.ProcessBusStop(p, params))
         {
-          m_busStops.push_back(BusStopInfo());
-          BusStopInfo & bsi = m_busStops.back();
-          bsi.id = p->id;
-          bsi.pt = pt;
-          bsi.params = params;
-        }
-        else
-        {
+          m2::PointD const pt = MercatorBounds::FromLatLon(p->lat, p->lon);
           EmitPoint(pt, params, osm::Id::Node(p->id));
         }
         state = FeatureState::Ok;
@@ -679,16 +675,15 @@ public:
 
   void Finish()
   {
+    m_busStopProcessor.ForEach([this](osm::Id id, m2::PointD const & pt, FeatureParams const & params)
+    {
+      EmitPoint(pt, params, id);
+    });
+    m_busStopProcessor.Clear();
+
     m_places.ForEach([this] (Place const & p)
     {
       m_emitter(p.GetFeature());
     });
-
-    for (BusStopInfo & bsi : m_busStops)
-    {
-      string routes = m_busStopProcessor.GetBusRoutes(bsi.id);
-      LOG(LINFO, ("Found bus stop", bsi.id, ":", routes));
-      EmitPoint(bsi.pt, bsi.params, osm::Id::Node(bsi.id));
-    }
   }
 };
