@@ -315,7 +315,7 @@ public:
     {
       string routes = strings::JoinStrings(kv.second.routes, ';');
 
-      kv.second.params.AddAddress(routes);
+      kv.second.params.GetMetadata().Set(feature::Metadata::FMD_BUS_ROUTES, routes);
 
       LOG(LINFO, ("Bus stop", kv.first, "routes are:", routes));
 

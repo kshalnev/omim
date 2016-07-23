@@ -98,6 +98,7 @@ public:
     case Metadata::FMD_PRICE_RATE: valid = ValidateAndFormat_price_rate(v); break;
     case Metadata::FMD_RATING: valid = ValidateAndFormat_rating(v); break;
 
+    case Metadata::FMD_BUS_ROUTES:
     case Metadata::FMD_TEST_ID:
     case Metadata::FMD_COUNT: CHECK(false, ("FMD_COUNT can not be used as a type."));
     }

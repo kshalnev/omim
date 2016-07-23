@@ -88,6 +88,7 @@ public:
   string GetWikipediaLink() const;
   string GetFlats() const;
   string GetBuildingLevels() const;
+  string GetBusRoutes() const;
 
   // TODO(Vlad, yunikkk): Use Props enum + getters instead of direct metadata access.
   // TODO: Remove this method.
@@ -146,6 +147,7 @@ vector<Props> MetadataToProps(vector<T> const & metadata)
     case Metadata::FMD_SPONSORED_ID:
     case Metadata::FMD_PRICE_RATE:
     case Metadata::FMD_RATING:
+    case Metadata::FMD_BUS_ROUTES:
     case Metadata::FMD_TEST_ID:
     case Metadata::FMD_COUNT:
       break;
