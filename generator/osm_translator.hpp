@@ -266,8 +266,6 @@ public:
     bsi.params = params;
     bsi.pt = MercatorBounds::FromLatLon(p->lat, p->lon);
 
-    LOG(LINFO, ("Found a bus stop", p->id));
-
     return true;
   }
 
@@ -298,12 +296,7 @@ public:
 
       i->second.routes.insert(ref);
       res = true;
-
-      LOG(LINFO, ("Found a route", ref, "bus stop", i->first));
     }
-
-    if (!res)
-      LOG(LINFO, ("Route", p->id, "bus stops not found"));
 
     return res;
   }
@@ -320,10 +313,10 @@ public:
 
       kv.second.params.GetMetadata().Set(feature::Metadata::FMD_BUS_ROUTES, routes);
 
-      LOG(LINFO, ("Bus stop", kv.first, "routes are:", routes));
-
       fn(osm::Id::Node(kv.first), kv.second.pt, kv.second.params);
       ++processed;
+
+      LOG(LINFO, ("Bus stop", kv.first, "routes are:", routes));
     }
 
     LOG(LINFO, (processed, "of", m_busStops.size(), "bus stops with routes"));

@@ -88,8 +88,12 @@ PlacePageDialog::PlacePageDialog(QWidget * parent, place_page::Info const & info
     string busRoutes = info.GetBusRoutes();
     if (!busRoutes.empty())
     {
+      vector<string> routes;
+      strings::Tokenize(busRoutes, ";", [&](std::string const & route) {
+        routes.emplace_back(route);
+      });
       grid->addWidget(new QLabel("Bus Routes"), row, 0);
-      QLabel * label = new QLabel(QString::fromStdString(busRoutes));
+      QLabel * label = new QLabel(QString::fromStdString(strings::JoinStrings(routes, ", ")));
       label->setTextInteractionFlags(Qt::TextSelectableByMouse);
       grid->addWidget(label, row++, 1);
     }
