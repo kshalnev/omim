@@ -316,7 +316,7 @@ public:
       fn(osm::Id::Node(kv.first), kv.second.pt, kv.second.params);
       ++processed;
 
-      LOG(LINFO, ("Bus stop", kv.first, "routes are:", routes));
+      // LOG(LINFO, ("Bus stop", kv.first, "routes are:", routes));
     }
 
     LOG(LINFO, (processed, "of", m_busStops.size(), "bus stops with routes"));
