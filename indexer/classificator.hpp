@@ -90,14 +90,14 @@ public:
   pair<int, int> GetDrawScaleRange() const;
 
   template <class ToDo>
-  void ForEachObject(ToDo toDo)
+  void ForEachObject(ToDo && toDo)
   {
     for (size_t i = 0; i < m_objs.size(); ++i)
       toDo(&m_objs[i]);
   }
 
   template <class ToDo>
-  void ForEachObjectInTree(ToDo & toDo, uint32_t const start) const
+  void ForEachObjectInTree(ToDo && toDo, uint32_t const start) const
   {
     for (size_t i = 0; i < m_objs.size(); ++i)
     {
@@ -208,9 +208,9 @@ public:
 
   /// Iterate through all classificator tree.
   /// Functor receives pointer to object and uint32 type.
-  template <class ToDo> void ForEachTree(ToDo & toDo) const
+  template <class ToDo> void ForEachTree(ToDo && toDo) const
   {
-    GetRoot()->ForEachObjectInTree(toDo, ftype::GetEmptyValue());
+    GetRoot()->ForEachObjectInTree(move(toDo), ftype::GetEmptyValue());
   }
 
   /// @name Used only in feature_visibility.cpp, not for public use.

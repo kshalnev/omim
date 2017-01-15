@@ -102,7 +102,7 @@ namespace drule
 
     void LoadFromBinaryProto(string const & s);
 
-    template <class ToDo> void ForEachRule(ToDo toDo)
+    template <class ToDo> void ForEachRule(ToDo && toDo)
     {
       for (rules_map_t::const_iterator i = m_rules.begin(); i != m_rules.end(); ++i)
       {
